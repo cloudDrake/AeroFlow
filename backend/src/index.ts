@@ -1,4 +1,4 @@
-import { createServer } from 'node:http'
+import express from 'express'
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 
@@ -8,17 +8,22 @@ const supabaseUrl = process.env.SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const supabase = supabaseUrl && supabaseServiceRoleKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : null
 
-function sendJson(res: import('node:http').ServerResponse, status: number, payload: unknown) {
-  res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS'
-  })
-  res.end(JSON.stringify(payload))
-}
+const app = express()
 
-async function requireSupabaseSession(req: import('node:http').IncomingMessage) {
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end()
+    return
+  }
+
+  next()
+})
+
+async function requireSupabaseSession(req: express.Request) {
   const authHeader = req.headers.authorization || ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
@@ -82,59 +87,55 @@ async function getFlightsForTenant(userId: string, tenantId: string) {
     return []
   }
 
-  console.log(`Fetched ${flightData.length} flights for tenant ${tenantId}`);
-  console.log(`Flight data: ${JSON.stringify(flightData)}`);
   return flightData ?? []
 }
 
-const server = createServer(async (req, res) => {
-  if (!req.url) {
-    sendJson(res, 400, { error: 'Missing URL' })
-    return
-  }
+app.get('/health', (_req, res) => {
+  res.json({ ok: true, service: 'flight-planner-api' })
+})
 
-  const requestUrl = new URL(req.url, 'http://localhost')
-  const method = req.method || 'GET'
+app.get('/api/tenants', async (req, res) => {
+  try {
+    const user = await requireSupabaseSession(req)
 
-  if (method === 'OPTIONS') {
-    sendJson(res, 200, { ok: true })
-    return
-  }
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
 
-  if (requestUrl.pathname === '/health') {
-    sendJson(res, 200, { ok: true, service: 'flight-planner-api' })
-    return
-  }
-
-  const user = await requireSupabaseSession(req)
-  if (!user) {
-    sendJson(res, 401, { error: 'Unauthorized' })
-    return
-  }
-
-  if (requestUrl.pathname === '/api/tenants') {
     const tenants = await getAccessibleTenants(user.id)
-    sendJson(res, 200, tenants)
-    return
+    res.json(tenants)
+  } catch (error) {
+    console.error('tenants error', error)
+    res.status(500).json({ error: 'Unable to load tenants' })
   }
+})
 
-  if (requestUrl.pathname === '/api/flights') {
-    const tenantId = requestUrl.searchParams.get('tenant') || ''
+app.get('/api/flights', async (req, res) => {
+  try {
+    const user = await requireSupabaseSession(req)
+
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const tenantId = req.query.tenant as string | undefined
 
     if (!tenantId) {
-      sendJson(res, 400, { error: 'Missing tenant query param' })
+      res.status(400).json({ error: 'Missing tenant query param' })
       return
     }
 
     const flights = await getFlightsForTenant(user.id, tenantId)
-    sendJson(res, 200, { tenantId, data: flights })
-    return
+    res.json(flights)
+  } catch (error) {
+    console.error('flights error', error)
+    res.status(500).json({ error: 'Unable to load flights' })
   }
-
-  sendJson(res, 404, { error: 'Not found' })
 })
 
 const port = Number(process.env.PORT || 4000)
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Backend running on http://localhost:${port}`)
 })
