@@ -9,10 +9,27 @@
   "scripts": {
     "dev": "concurrently \"npm --workspace=backend run dev\" \"npm --workspace=frontend run dev\"",
     "build": "npm --workspace=frontend run build && npm --workspace=backend run build",
+    "lint": "npm --workspace=backend run lint && npm --workspace=frontend run lint",
+    "format": "npm --workspace=backend run format && npm --workspace=frontend run format",
+    "format:check": "npm --workspace=backend run format:check && npm --workspace=frontend run format:check",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged",
     "start:backend": "npm --workspace=backend run start",
     "start:frontend": "npm --workspace=frontend run dev"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,ts,json,md}": [
+      "npm --workspace=backend run format",
+      "npm --workspace=backend run lint"
+    ],
+    "frontend/**/*.{js,jsx,ts,tsx,json,css,md}": [
+      "npm --workspace=frontend run format",
+      "npm --workspace=frontend run lint"
+    ]
   }
 }

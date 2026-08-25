@@ -21,6 +21,19 @@ npm install
 npm run dev
 ```
 
+### Monorepo tooling
+
+From the repo root:
+
+```bash
+npm run lint
+npm run format
+npm run format:check
+npm run build
+```
+
+These commands run the backend and frontend checks together so the entire monorepo is covered.
+
 ## Environment
 
 Create the backend env file and fill in your own Supabase values:
