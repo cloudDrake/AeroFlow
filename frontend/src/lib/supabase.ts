@@ -3,15 +3,16 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
-  : null
+export const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      })
+    : null
 
 export async function signInWithSupabase(email: string, password: string) {
   if (!supabase) {
@@ -33,4 +34,13 @@ export async function getCurrentSession() {
   }
 
   return supabase.auth.getSession()
+}
+
+export async function signOutSupabase() {
+  if (!supabase) {
+    return { error: null }
+  }
+
+  const { error } = await supabase.auth.signOut()
+  return { error }
 }

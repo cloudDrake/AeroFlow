@@ -21,6 +21,8 @@ create table if not exists public.flights (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
   flight_number text not null,
+  departure_airport text not null,
+  arrival_airport text not null,
   route text not null,
   status text not null default 'pending' check (status in ('ready', 'pending', 'alert')),
   eta text not null,
@@ -68,32 +70,32 @@ values
   ('pacific', 'Pacific Air', 'Pacific Rim')
 on conflict (slug) do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'F-102', 'SFO → JFK', 'ready', '08:45', 'A320'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'F-102', 'SFO', 'JFK', 'SFO → JFK', 'ready', '08:45', 'A320'
 from public.tenants t where t.slug = 'northstar'
 on conflict do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'F-204', 'SEA → DEN', 'pending', '11:20', 'B737'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'F-204', 'SEA', 'DEN', 'SEA → DEN', 'pending', '11:20', 'B737'
 from public.tenants t where t.slug = 'northstar'
 on conflict do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'A-441', 'LHR → JFK', 'ready', '09:10', 'A350'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'A-441', 'LHR', 'JFK', 'LHR → JFK', 'ready', '09:10', 'A350'
 from public.tenants t where t.slug = 'atlantic'
 on conflict do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'A-772', 'CDG → DXB', 'alert', '12:40', 'A330'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'A-772', 'CDG', 'DXB', 'CDG → DXB', 'alert', '12:40', 'A330'
 from public.tenants t where t.slug = 'atlantic'
 on conflict do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'P-918', 'HND → SFO', 'pending', '10:45', 'A321neo'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'P-918', 'HND', 'SFO', 'HND → SFO', 'pending', '10:45', 'A321neo'
 from public.tenants t where t.slug = 'pacific'
 on conflict do nothing;
 
-insert into public.flights (tenant_id, flight_number, route, status, eta, aircraft)
-select t.id, 'P-315', 'SYD → LAX', 'ready', '14:25', 'B787'
+insert into public.flights (tenant_id, flight_number, departure_airport, arrival_airport, route, status, eta, aircraft)
+select t.id, 'P-315', 'SYD', 'LAX', 'SYD → LAX', 'ready', '14:25', 'B787'
 from public.tenants t where t.slug = 'pacific'
 on conflict do nothing;

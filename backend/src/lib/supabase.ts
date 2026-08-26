@@ -1,15 +1,15 @@
 import { createClient, type User } from '@supabase/supabase-js'
 import type { Request } from 'express'
 import dotenv from 'dotenv'
+import { normalizeTenantList, type TenantRecord, type TenantRow } from './tenantHelpers.js'
 
 dotenv.config()
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-export const supabase = supabaseUrl && supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey)
-  : null
+export const supabase =
+  supabaseUrl && supabaseServiceRoleKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : null
 
 export async function requireSupabaseSession(req: Request): Promise<User | null> {
   const authHeader = req.headers.authorization || ''
@@ -32,7 +32,7 @@ export async function requireSupabaseSession(req: Request): Promise<User | null>
   return data.user
 }
 
-export async function getAccessibleTenants(userId: string) {
+export async function getAccessibleTenants(userId: string): Promise<TenantRecord[]> {
   if (!supabase) {
     return []
   }
@@ -46,9 +46,7 @@ export async function getAccessibleTenants(userId: string) {
     return []
   }
 
-  return data
-    .map((row: any) => row.tenants)
-    .filter(Boolean)
+  return data.flatMap((row: TenantRow) => normalizeTenantList(row.tenants))
 }
 
 export async function getFlightsForTenant(userId: string, tenantId: string) {
