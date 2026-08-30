@@ -1,5 +1,10 @@
 # Flight Planner
 
+[![ESLint](https://github.com/cloudDrake/AeroFlow/actions/workflows/eslint.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/eslint.yml)
+[![CodeQL](https://github.com/cloudDrake/AeroFlow/actions/workflows/codeql.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/codeql.yml)
+[![Gitleaks](https://github.com/cloudDrake/AeroFlow/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/gitleaks.yml)
+[![Semgrep](https://github.com/cloudDrake/AeroFlow/actions/workflows/semgrep.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/semgrep.yml)
+
 A lightweight flight planning application scaffolded with React, TanStack Router, TanStack Query, Supabase, and Express.
 
 ## Stack
