@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <!-- Airflow / Route Gradient -->
+    <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.1" />
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    
+    <!-- High-Contrast Accent Gradient for Jet Trails -->
+    <linearGradient id="jetTrailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Enhanced Glow/Shadow for 3D POP -->
+    <filter id="popGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="1" dy="3" stdDeviation="2.5" flood-color="#020617" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded Icon Base -->
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)" />
+
+  <!-- Background Airflow (Recessed) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M 8 44 C 20 44, 24 52, 40 44" stroke="url(#routeGrad)" stroke-width="2" stroke-dasharray="2 6" opacity="0.5" />
+    <path d="M 6 28 C 24 28, 22 56, 44 40 C 52 34, 54 24, 46 18" stroke="url(#routeGrad)" stroke-width="4" />
+  </g>
+
+  <!-- Yellow Jet Engine Trails (Adds color pop behind the plane) -->
+  <g fill="none" stroke="url(#jetTrailGrad)" stroke-width="2" stroke-linecap="round" opacity="0.9">
+    <path d="M 38 22 C 40 20, 42 19, 44 18" />
+    <path d="M 40 24 C 42 22, 44 21, 46 20" />
+  </g>
+
+  <!-- High-Visibility Airplane (35% Larger, Detailed Wings, High-Contrast Pop Shadow) -->
+  <g transform="translate(48, 16) rotate(-38)" filter="url(#popGlow)">
+    <!-- Main Wings -->
+    <path d="M -14,6 L 0,-14 L 14,6 L 4,4 L 0,6 L -4,4 Z" fill="#ffffff" />
+    <!-- Fuselage & Nose Cone -->
+    <path d="M 0,-16 L 2.5,-10 L 2.5,7 L 0,10 L -2.5,7 L -2.5,-10 Z" fill="#f8fafc" />
+    <!-- Tail Fin / Stabilizers -->
+    <path d="M -5,9 L 0,7 L 5,9 L 4,12 L 0,10 L -4,12 Z" fill="#cbd5e1" />
+    <!-- Canopy Accent for Detail -->
+    <path d="M 0,-8 L 1.5,-4 L 0,-2 L -1.5,-4 Z" fill="#38bdf8" />
+  </g>
+</svg>

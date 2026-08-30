@@ -326,7 +326,10 @@ export default function App() {
           <p className="mb-1 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-blue-300">
             Multi-tenant ops
           </p>
-          <h1 className="text-2xl font-semibold text-slate-50">Flight Planner</h1>
+          <h1 className="text-2xl font-semibold text-slate-50 flex items-center gap-2">
+            <img src="/favicon.svg" alt="" className="h-8 w-8" />
+            Aero Flow
+          </h1>
         </div>
 
         <div className="flex items-center gap-3">

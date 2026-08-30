@@ -1,4 +1,4 @@
-# Flight Planner
+# Aero Flow
 
 [![ESLint](https://github.com/cloudDrake/AeroFlow/actions/workflows/eslint.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/eslint.yml)
 [![CodeQL](https://github.com/cloudDrake/AeroFlow/actions/workflows/codeql.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/codeql.yml)
@@ -6,6 +6,8 @@
 [![Semgrep](https://github.com/cloudDrake/AeroFlow/actions/workflows/semgrep.yml/badge.svg)](https://github.com/cloudDrake/AeroFlow/actions/workflows/semgrep.yml)
 
 A lightweight flight planning application scaffolded with React, TanStack Router, TanStack Query, Supabase, and Express.
+
+![Aero Flow](public/aero-flow.png)
 
 ## Stack
 
