@@ -4,7 +4,7 @@ import { listFlightsForTenant } from '../services/flightService.js'
 import { BaseController } from './baseController.js'
 
 export class FlightController extends BaseController {
-  async getFlights(req: Request, res: Response) {
+  public async getFlights(req: Request, res: Response) {
     try {
       const user = await requireSupabaseSession(req)
 
@@ -13,6 +13,7 @@ export class FlightController extends BaseController {
         return
       }
 
+      // TODO: Should this be from query?
       const tenantId = req.query.tenant as string | undefined
 
       if (!tenantId) {
