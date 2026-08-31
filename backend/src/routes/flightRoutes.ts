@@ -1,8 +1,9 @@
 import { Router } from 'express'
-import { getFlights } from '../controllers/flightController.js'
+import { FlightController } from '../controllers/flightController.js'
 
 const router = Router()
 
-router.get('/', getFlights)
+const flightController = new FlightController()
+router.get('/', flightController.getFlights)
 
 export default router

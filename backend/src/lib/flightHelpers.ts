@@ -1,3 +1,4 @@
+/** TYPES */
 export type FlightRecord = {
   id: string
   tenant_id: string

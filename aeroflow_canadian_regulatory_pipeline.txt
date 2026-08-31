@@ -1,0 +1,422 @@
+Aero Flow — Canadian Crew Scheduling Regulatory Pipeline
+
+OVERALL ARCHITECTURE
+
+                    TRANSPORT CANADA
+                           |
+                           v
+                 +------------------+
+                 | 1. INGEST SOURCES |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 2. STORE RAW DOCS |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 3. EXTRACT TEXT  |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 4. PARSE RULES   |
+                 |      + AI        |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 5. VALIDATE RULES|
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 6. STORE RULES   |
+                 |    IN POSTGRES   |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 7. RULES ENGINE  |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 8. PAIRING       |
+                 |    GENERATOR     |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 9. OPTIMIZER     |
+                 +--------+---------+
+                          |
+                          v
+                 +------------------+
+                 | 10. EXPLAINABLE  |
+                 |     SCHEDULE     |
+                 +------------------+
+
+
+1. INGEST REGULATORY SOURCES
+- Automatically obtain authoritative Canadian documents.
+- Initial sources:
+  * Canadian Aviation Regulations (CARs)
+  * AC 700-047
+  * CASS 723 / 724 / 725
+  * Operator exemptions
+- Source adapters should answer: "What documents exist and where can I get them?"
+- Do not hardcode actual scheduling rules here.
+
+
+2. STORE RAW DOCUMENTS
+- Use Supabase Storage.
+- Suggested structure:
+
+  regulations/
+    canada/
+      cars/
+      cass/
+      advisory-circulars/
+      exemptions/
+
+- Keep metadata in Postgres:
+  * title
+  * document type
+  * storage path
+  * source URL
+  * SHA-256 hash
+  * retrieved date
+  * effective dates
+- Hashes let you detect when Transport Canada changes a document.
+
+
+3. EXTRACT TEXT
+Pipeline:
+
+  PDF / HTML
+      |
+      v
+  PDF parser / OCR
+      |
+      v
+  pages
+      |
+      v
+  sections
+      |
+      v
+  text
+
+- Persist extracted sections.
+- Example fields:
+  * document_id
+  * section_number
+  * title
+  * page
+  * text
+- Do not make the AI reread entire PDFs every time.
+
+
+4. PARSE THE RULES
+- AI is useful for turning regulatory text into structured candidate rules.
+- Feed the model a specific section and ask for structured JSON.
+- Example:
+
+  {
+    "ruleType": "MINIMUM_REST",
+    "parameters": {
+      "minutes": 720
+    },
+    "appliesTo": ["flight_crew"],
+    "confidence": 0.97,
+    "source": {
+      "section": "705.XXX",
+      "page": 42
+    }
+  }
+
+- Validate AI output against a TypeScript schema such as Zod.
+
+
+5. VALIDATE EXTRACTED RULES
+IMPORTANT: AI output should NOT immediately become an active scheduling rule.
+
+Workflow:
+
+  Extract
+     |
+     v
+  AI proposes rule
+     |
+     v
+  Schema validation
+     |
+     v
+  Human review
+     |
+     +----> REJECTED
+     |
+     v
+  APPROVED
+     |
+     v
+  ACTIVE
+
+Suggested statuses:
+- PROPOSED
+- APPROVED
+- REJECTED
+- SUPERSEDED
+
+This prevents an AI interpretation error from becoming a scheduling constraint.
+
+
+6. STORE STRUCTURED RULES
+Postgres tables:
+
+  regulatory_documents
+  regulatory_sections
+  regulatory_rules
+  regulatory_rule_versions
+
+Example rule:
+
+  {
+    "id": "...",
+    "type": "MAX_DUTY",
+    "parameters": {
+      "maxMinutes": 840
+    },
+    "jurisdiction": "CA",
+    "operatorCategories": ["705"],
+    "effectiveFrom": "2026-01-01",
+    "status": "APPROVED",
+    "sourceSectionId": "..."
+  }
+
+- JSONB parameters are useful initially because rule shapes vary.
+- Normalize frequently used rule types later.
+
+
+7. BUILD THE RULES ENGINE
+The rules engine should be deterministic.
+
+Input:
+  validatePairing(
+    pairing,
+    crewMember,
+    aircraft,
+    operator,
+    rules
+  )
+
+Output:
+
+  {
+    "valid": false,
+    "violations": [
+      {
+        "ruleId": "...",
+        "type": "MAX_DUTY",
+        "actual": 912,
+        "allowed": 840,
+        "sourceSection": "705.XXX"
+      }
+    ]
+  }
+
+No LLM should decide whether a pairing is legal at runtime.
+
+
+8. BUILD THE PAIRING GENERATOR
+Inputs:
+- Flights
+- Rules
+- Crew qualifications
+- Aircraft constraints
+
+Generate candidate sequences:
+
+  Flight A
+      |
+      v
+  Flight B
+      |
+      v
+  Flight C
+      |
+      v
+  Flight D
+
+For each candidate:
+- Run the deterministic rules engine.
+- Keep legal pairings.
+- Record violations for rejected pairings.
+
+Example:
+  10,000 candidate pairings
+      |
+      v
+  6,200 legally valid pairings
+      |
+      v
+  optimizer
+
+
+9. OPTIMIZE
+Use MILP / CP-SAT.
+
+The optimizer does NOT need to understand Canadian regulations.
+
+It receives:
+- Valid pairings
+- Pairing costs
+- Coverage constraints
+- Crew/base constraints
+- Other optimization objectives
+
+Example objective:
+
+  total_cost =
+      crew_cost
+    + hotel_cost
+    + deadhead_cost
+    + overtime_cost
+    + uncovered_flight_penalty
+
+Typical result:
+  6,200 valid pairings
+        |
+        v
+     optimizer
+        |
+        v
+   200 selected
+        |
+        v
+   complete schedule
+
+
+10. MAKE RESULTS EXPLAINABLE
+Aero Flow should explain WHY a pairing is rejected.
+
+Example:
+
+  Pairing rejected
+
+  Maximum duty period exceeded
+
+  Actual:     15h 12m
+  Maximum:    14h
+
+  Source:
+  CARs 705.XXX
+  Page 42
+
+  Rule version:
+  2026-01-01
+
+This makes the scheduler auditable instead of just saying:
+"Solver says no."
+
+
+RECOMMENDED CODE STRUCTURE
+
+aeroflow/
+|
++-- apps/
+|   +-- frontend/
+|   +-- api/
+|
++-- packages/
+|   +-- domain/
+|   |   +-- flight/
+|   |   +-- crew/
+|   |   +-- pairing/
+|   |   +-- aircraft/
+|   |
+|   +-- regulations/
+|   |   +-- ingestion/
+|   |   +-- extraction/
+|   |   +-- parser/
+|   |   +-- schemas/
+|   |   +-- engine/
+|   |
+|   +-- optimizer/
+|       +-- model/
+|       +-- constraints/
+|       +-- solver/
+|
++-- supabase/
+    +-- migrations/
+
+
+KEY ARCHITECTURAL BOUNDARY
+
+             REGULATORY WORLD
+                    |
+                    v
+             +--------------+
+             | Rules Engine |
+             +------+-------+
+                    |
+              legal pairings
+                    |
+                    v
+             +--------------+
+             |  Optimizer   |
+             +------+-------+
+                    |
+               best schedule
+
+
+WHERE AI BELONGS
+
+AI belongs primarily in the regulatory ingestion side:
+
+  Regulatory documents
+        |
+        v
+  Extract text
+        |
+        v
+  AI -> proposed structured rules
+        |
+        v
+  Human verification
+        |
+        v
+  Postgres rules
+
+Deterministic code:
+- Rules engine
+- Pairing validation
+
+Optimization:
+- MILP / CP-SAT
+
+
+RECOMMENDED BUILD ORDER
+
+Do NOT start with the optimizer.
+
+Milestone 1:
+  PDF
+   -> Supabase Storage
+   -> Extract text
+   -> AI -> structured rule
+   -> Zod validation
+   -> Human approval
+   -> Postgres
+   -> TypeScript rules engine
+   -> "Is this pairing legal?"
+
+Milestone 2:
+  Build pairing generator.
+
+Milestone 3:
+  Introduce MILP / CP-SAT.
+
+This creates incremental, testable pieces instead of trying to build the entire airline scheduler at once.
