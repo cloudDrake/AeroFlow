@@ -1,9 +1,10 @@
 import { Router } from 'express'
-import { TenantController } from '../controllers/tenantController.js'
+
+import { tenantController } from '../controllers/tenantController.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
-const tenantController = new TenantController()
 
-router.get('/', tenantController.getTenants)
+router.get('/', requireAuth, tenantController.getTenants)
 
 export default router

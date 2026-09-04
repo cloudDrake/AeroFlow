@@ -10,18 +10,20 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "prisma:generate": "prisma generate"
+    "format:check": "prettier --check --write .",
+    "regulatory:ingest": "tsx src/regulatory/cli/ingest.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.8.0",
-    "@types/express": "^5.0.6",
     "dotenv": "^16.0.0",
-    "express": "^4.22.2"
+    "express": "^4.22.2",
+    "jsdom": "^30.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.15.30",
+    "@types/express": "^5.0.6",
+    "@types/jsdom": "^30.0.0",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",

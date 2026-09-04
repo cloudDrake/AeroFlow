@@ -15,7 +15,8 @@
     "prepare": "husky install",
     "lint-staged": "lint-staged",
     "start:backend": "npm --workspace=backend run start",
-    "start:frontend": "npm --workspace=frontend run dev"
+    "start:frontend": "npm --workspace=frontend run dev",
+    "regulatory:ingest": "npm --workspace backend run regulatory:ingest"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

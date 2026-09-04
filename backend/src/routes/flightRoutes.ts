@@ -1,9 +1,10 @@
 import { Router } from 'express'
-import { FlightController } from '../controllers/flightController.js'
+
+import { flightController } from '../controllers/flightController.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
 
-const flightController = new FlightController()
-router.get('/', flightController.getFlights)
+router.get('/', requireAuth, flightController.getFlights)
 
 export default router

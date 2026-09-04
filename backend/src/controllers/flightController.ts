@@ -1,20 +1,13 @@
 import type { Request, Response } from 'express'
-import { requireSupabaseSession } from '../lib/supabase.js'
+
 import { FlightService } from '../services/flightService.js'
 import { BaseController } from './baseController.js'
 
 export class FlightController extends BaseController {
-  private flightService: FlightService = new FlightService()
+  private flightService = new FlightService()
 
-  public getFlights = async (req: Request, res: Response) => {
+  getFlights = async (req: Request, res: Response) => {
     try {
-      const user = await requireSupabaseSession(req)
-
-      if (!user) {
-        this.unauthorized(res)
-        return
-      }
-
       const tenantId = req.query.tenant as string | undefined
 
       if (!tenantId) {
@@ -22,10 +15,10 @@ export class FlightController extends BaseController {
         return
       }
 
-      const flights = await this.flightService.listFlightsForTenant(user.id, tenantId)
+      const flights = await this.flightService.listFlightsForTenant(req.user!.id, tenantId)
       res.json(flights)
     } catch (error) {
-      this.serverError(res, error, 'flights', `Unable to load flights`)
+      this.serverError(res, error, 'flights', 'Unable to load flights')
     }
   }
 }

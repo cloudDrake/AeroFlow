@@ -1,47 +1,14 @@
-import { supabase } from '../lib/supabase.js'
-import { TenantRecord, TenantRow, normalizeTenantList } from '../lib/tenantHelpers.js'
+import type { TenantRecord } from '../types/tenant.js'
+import { TenantRepository } from '../repositories/tenant.repository.js'
 
 export class TenantService {
-  constructor() {}
+  private tenantRepository = new TenantRepository()
 
-  public listAccessibleTenantsForUser = async (userId: string): Promise<TenantRecord[]> => {
-    return this.getAccessibleTenants(userId)
+  async listAccessibleTenantsForUser(userId: string): Promise<TenantRecord[]> {
+    return this.tenantRepository.findAccessibleTenants(userId)
   }
 
-  private getAccessibleTenants = async (userId: string): Promise<TenantRecord[]> => {
-    if (!supabase) {
-      return []
-    }
-
-    const { data, error } = await supabase
-      .from('tenant_memberships')
-      .select('tenant_id, tenants:tenant_id (id, slug, name, region)')
-      .eq('user_id', userId)
-
-    if (error || !data) {
-      return []
-    }
-
-    return data.flatMap((row: TenantRow) => normalizeTenantList(row.tenants))
-  }
-
-  public isValidTenantIdFromUser = async (userId: string, tenantId: string): Promise<boolean> => {
-    if (!supabase) {
-      return false
-    }
-
-    const { data, error } = await supabase
-      .from('tenant_memberships')
-      .select('tenant_id')
-      .eq('user_id', userId)
-      .eq('tenant_id', tenantId)
-      .limit(1)
-      .single()
-
-    if (error || !data) {
-      return false
-    }
-
-    return data.tenant_id === tenantId
+  async isValidTenantIdFromUser(userId: string, tenantId: string): Promise<boolean> {
+    return this.tenantRepository.hasMembership(userId, tenantId)
   }
 }

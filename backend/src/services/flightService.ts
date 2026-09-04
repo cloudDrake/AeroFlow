@@ -1,48 +1,17 @@
-import { FlightRecord } from '../lib/flightHelpers.js'
-import { supabase } from '../lib/supabase.js'
+import { FlightRepository } from '../repositories/flight.repository.js'
+import type { FlightRecord } from '../types/flight.js'
 import { TenantService } from './tenantService.js'
 
 export class FlightService {
-  tenantService: TenantService = new TenantService()
-  constructor() {}
+  private flightRepository = new FlightRepository()
+  private tenantService = new TenantService()
 
-  /**
-   *
-   * @param userId
-   * @param tenantId
-   * @returns FlightRecord[]
-   */
-  public listFlightsForTenant = async (userId: string, tenantId: string) => {
-    // Validate if user has access to the tenant
+  async listFlightsForTenant(userId: string, tenantId: string): Promise<FlightRecord[]> {
     const isValidTenantId = await this.tenantService.isValidTenantIdFromUser(userId, tenantId)
     if (!isValidTenantId) {
       return []
     }
 
-    // Get actual flight data for tenant
-    const flightData = await this.getFlightDataForTenant(tenantId)
-    return flightData ?? []
-  }
-
-  /**
-   *
-   * @param tenantId
-   * @returns
-   */
-  private getFlightDataForTenant = async (tenantId: string): Promise<FlightRecord[]> => {
-    if (!supabase) {
-      return []
-    }
-
-    const { data, error: flightsError } = await supabase
-      .from('flights')
-      .select('*')
-      .eq('tenant_id', tenantId)
-
-    if (flightsError) {
-      return []
-    }
-
-    return data ?? []
+    return this.flightRepository.findByTenantId(tenantId)
   }
 }

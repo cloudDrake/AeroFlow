@@ -13,10 +13,13 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,js}'],
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
         ...globals.node
+      },
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname
       }
     },
     plugins: {
